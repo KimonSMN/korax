@@ -1,4 +1,5 @@
 import tkinter as tk                # python 3
+from tkinter import ttk
 from tkinter import font as tkfont  # python 3
 from PIL import Image, ImageTk
 import sqlite3
@@ -10,6 +11,12 @@ class App(tk.Tk):
 
         self.title_font = tkfont.Font(family='Helvetica', size=18, weight="bold", slant="italic")
         self.geometry("800x800") # Set window size
+        self.option_add("*tearOff", False) # This is always a good idea
+
+        style = ttk.Style(self)
+        self.tk.call("source", "forest-light.tcl")
+        style.theme_use("forest-light")
+
         # the container is where we'll stack a bunch of frames
         # on top of each other, then the one we want visible
         # will be raised above the others
@@ -95,7 +102,7 @@ class PatientProfile(tk.Frame):
             conn = sqlite3.connect('test.db')
             curr = conn.cursor()
 
-            curr.execute("INSERT INTO patients (name,surname,father,age,address,amka) "
+            curr.execute("INSERT INTO patients (name,surname,father,age,address,amka)"
                         "VALUES (?, ?, ?, ?, ?, ?)", (name,surname,father,age,address,amka))
             conn.commit()
             conn.close()
@@ -138,6 +145,7 @@ class NewVisit(tk.Frame):
 if __name__ == "__main__":
     app = App()
     app.mainloop()
+
 
 
 
