@@ -89,27 +89,27 @@ class PatientProfile(tk.Frame):
         label.config(font=('Helvetica', 12)) # font size 12
         label.grid(row=row, column=0, padx=10, pady=5, sticky="e")
 
-        text_var = tk.StringVar()
-        text_var.set(label_text)  # Default placeholder text
+        placeholder = tk.StringVar()
+        placeholder.set(label_text)  # Default placeholder text
 
-        entry = ttk.Entry(parent, textvariable=text_var)
+        entry = ttk.Entry(parent, textvariable=placeholder)
         entry.grid(row=row, column=1, padx=10, pady=5, sticky="w")
 
-        entry.bind("<FocusIn>", lambda event, e=entry, v=text_var, default=label_text: self.clearBox(e, v, default))
-        entry.bind("<FocusOut>", lambda event, e=entry, v=text_var, default=label_text: self.restore_placeholder(e, v, default))
+        entry.bind("<FocusIn>", lambda event, e=entry, v=placeholder, default=label_text: self.clearBox(e, v, default))
+        entry.bind("<FocusOut>", lambda event, e=entry, v=placeholder, default=label_text: self.restore_placeholder(e, v, default))
         
         # Store the entry in a dictionary for later access
-        self.entries[label_text] = (entry, text_var)
+        self.entries[label_text] = (entry)
 
-    def clearBox(self, entry, text_var, default_text):
+    def clearBox(self, entry, placeholder, default_text):
         """Clears the text inside the entry field only if it's the default placeholder."""
-        if text_var.get() == default_text:
-            text_var.set("")  # Clear placeholder text
+        if placeholder.get() == default_text:
+            placeholder.set("")  # Clear placeholder text
 
-    def restore_placeholder(self, entry, text_var, default_text):
+    def restore_placeholder(self, entry, placeholder, default_text):
         """Restores placeholder text if the field is left empty."""
-        if not text_var.get().strip():
-            text_var.set(default_text)  # Restore placeholder text
+        if not placeholder.get().strip():
+            placeholder.set(default_text)  # Restore placeholder text
 
     def add_entry(self):
         name = self.entries["Name"].get()  # Get text from the textbox
