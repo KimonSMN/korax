@@ -1,6 +1,6 @@
 import tkinter as tk                # python 3
 from tkinter import ttk
-from tkinter import font as tkfont  # python 3
+from tkinter import *
 from PIL import Image, ImageTk
 import sqlite3
 
@@ -71,7 +71,7 @@ class PatientProfile(tk.Frame):
         self.create_labeled_entry(form_frame, "Address", 4)
         self.create_labeled_entry(form_frame, "AMKA", 5)
 
-        button = ttk.Button(form_frame, text="Add new entry", style="Accent.TButton", command=self.add_entry)
+        button = ttk.Button(form_frame, padding=(10, 9, 10, 7), text="Add new entry", style="Accent.TButton", command=self.add_entry) #padding aligns text in the center of button
         button.grid(column=0, columnspan=2, pady=10)#, sticky='nswe'
 
         buttonPrint = ttk.Button(form_frame, text="Print DB", command=self.print_database)
@@ -83,20 +83,33 @@ class PatientProfile(tk.Frame):
 
 
 
-
-
-
     def create_labeled_entry(self, parent, label_text, row):
         """Creates a label and an entry field in the specified parent frame."""
         label = ttk.Label(parent, text=label_text)
         label.config(font=('Helvetica', 12)) # font size 12
         label.grid(row=row, column=0, padx=10, pady=5, sticky="e")
 
-        entry = ttk.Entry(parent)
+        text_var = tk.StringVar()
+        text_var.set(label_text)  # Default placeholder text
+
+        entry = ttk.Entry(parent, textvariable=text_var)
         entry.grid(row=row, column=1, padx=10, pady=5, sticky="w")
 
+        entry.bind("<FocusIn>", lambda event, e=entry, v=text_var, default=label_text: self.clearBox(e, v, default))
+        entry.bind("<FocusOut>", lambda event, e=entry, v=text_var, default=label_text: self.restore_placeholder(e, v, default))
+        
         # Store the entry in a dictionary for later access
-        self.entries[label_text] = entry
+        self.entries[label_text] = (entry, text_var)
+
+    def clearBox(self, entry, text_var, default_text):
+        """Clears the text inside the entry field only if it's the default placeholder."""
+        if text_var.get() == default_text:
+            text_var.set("")  # Clear placeholder text
+
+    def restore_placeholder(self, entry, text_var, default_text):
+        """Restores placeholder text if the field is left empty."""
+        if not text_var.get().strip():
+            text_var.set(default_text)  # Restore placeholder text
 
     def add_entry(self):
         name = self.entries["Name"].get()  # Get text from the textbox
