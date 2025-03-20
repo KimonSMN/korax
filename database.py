@@ -129,7 +129,8 @@ class PatientProfile(tk.Frame):
         text.bind("<FocusIn>", lambda event, w=text, d=label_text: self.clear_placeholder(w, d))
         text.bind("<FocusOut>", lambda event, w=text, d=label_text: self.restore_placeholder(w, d))
     
-        text.configure()  # Placeholder text color
+        self.entries[label_text] = (text, None)
+
 
 
     def clear_placeholder(self, widget, default_text: str) -> None:
@@ -154,15 +155,26 @@ class PatientProfile(tk.Frame):
                 widget.insert("1.0", default_text)
                 widget.configure(text_color="gray")  # Placeholder color
 
-
     def add_entry(self) -> None:
-        name: str = self.entries["Name"][1].get()  # Get text from the textbox
-        surname: str = self.entries["Surname"][1].get()
-        father: str = self.entries["Father Name"][1].get()
-        age_input: str = self.entries["Age"][1].get()
-        address: str = self.entries["Address"][1].get()
-        amka: str = self.entries["AMKA"][1].get()
 
+        # Retrieve values dynamically from both ttk.Entry and customtkinter.CTkTextbox
+        def get_widget_value(widget):
+            """Returns the value from an Entry or Text widget dynamically."""
+            if isinstance(widget, ttk.Entry):  # ttk.Entry
+                return widget.get().strip()
+            elif isinstance(widget, customtkinter.CTkTextbox):  # customtkinter.CTkTextbox
+                return widget.get("1.0", "end-1c").strip()
+            return ""
+        
+        # Extract input values
+        name: str = get_widget_value(self.entries["Name"][0])  
+        surname: str = get_widget_value(self.entries["Surname"][0])
+        father: str = get_widget_value(self.entries["Father Name"][0])
+        age_input: str = get_widget_value(self.entries["Age"][0])
+        address: str = get_widget_value(self.entries["Address"][0])
+        amka: str = get_widget_value(self.entries["AMKA"][0])
+        allergies: str = get_widget_value(self.entries["Enter Allergies..."][0])
+        print(allergies)
         # Validate non-empty fields
         if not name or not surname or not father or not address:
             print("ERROR: Name, Surname, Father Name and Address can't be empty!")
@@ -179,6 +191,7 @@ class PatientProfile(tk.Frame):
             return
 
         # Validate AMKA 
+        amka = amka.replace(" ", "")  # Remove accidental spaces
         if not amka.isdigit() or len(amka) != 11:
             print("Error: AMKA must be an 11-digit number.")
             return
@@ -186,16 +199,18 @@ class PatientProfile(tk.Frame):
         conn = sqlite3.connect('test.db')
         curr = conn.cursor()
 
-        curr.execute("INSERT INTO patients (name,surname,father,age,address,amka)"
-                    "VALUES (?, ?, ?, ?, ?, ?)", (name,surname,father,age,address,amka))
+        curr.execute("INSERT INTO patients (name,surname,father,age,address,amka,allergies)"
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)", (name,surname,father,age,address,amka,allergies))
         conn.commit()
         conn.close()
 
-        #clear field after insert
-        for label_text, (entry, placeholder) in self.entries.items():
-            entry.delete(0, tk.END)
-            self.restore_placeholder(entry, placeholder, label_text)
-        
+        # Clear fields after insertion and restore placeholders
+        for label_text, (widget, placeholder) in self.entries.items():
+            if isinstance(widget, ttk.Entry):
+                widget.delete(0, tk.END)
+            elif isinstance(widget, customtkinter.CTkTextbox):
+                widget.delete("1.0", "end")
+            self.restore_placeholder(widget, label_text)
 
     def print_database(self):
         conn = sqlite3.connect('test.db')
