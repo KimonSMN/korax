@@ -4,6 +4,8 @@ from tkinter import *
 import sqlite3
 import customtkinter
 from datetime import date
+from faker import Faker
+import random
 
 class App(tk.Tk):
 
@@ -27,7 +29,7 @@ class App(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {} # create dictionary of screens
-        for F in (PatientProfile, NewVisit):
+        for F in (PatientProfile, Patients):
             page_name = F.__name__
             frame = F(parent = container, controller = self)
             self.frames[page_name] = frame
@@ -36,7 +38,7 @@ class App(tk.Tk):
             # the one on the top of the stacking order
             # will be the one that is visible.
             frame.grid(row=0, column=0, sticky="nsew")
-        self.show_frame("PatientProfile")
+        self.show_frame("Patients")
 
         conn = sqlite3.connect('test.db')
         curr = conn.cursor()
@@ -98,8 +100,8 @@ class PatientProfile(tk.Frame):
         ttk.Button(form_frame, text="Toggle Allergies", command=lambda: self.toggle_text(self.allergies, 6)).grid(column=0, columnspan=2, pady=10)
         self.allergies.grid_remove() # Placed after the creation of the button because it didn't dynamically if placed before
 
-        button1 = ttk.Button(form_frame, text="Go to New Visit",
-                            command=lambda: controller.show_frame("NewVisit"))
+        button1 = ttk.Button(form_frame, text="Go to Patients",
+                            command=lambda: controller.show_frame("Patients"))
         button1.grid(column=0, columnspan=2, pady=10)
 
     def create_labeled_entry(self, parent, label_text, row, width):
@@ -239,24 +241,180 @@ class PatientProfile(tk.Frame):
         self.allergies_visible = not self.allergies_visible
 
 
-class NewVisit(tk.Frame):
+def populate_database(num_entries=1000):
+    fake = Faker()
+    conn = sqlite3.connect("test.db")
+    curr = conn.cursor()
 
+    # Ensure table exists
+    curr.execute("""CREATE TABLE IF NOT EXISTS patients (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    surname TEXT,
+                    father TEXT,
+                    age INTEGER,
+                    address TEXT,
+                    amka TEXT,
+                    allergies TEXT,
+                    medications TEXT
+                );""")
+
+    # Insert fake data
+    for _ in range(num_entries):
+        name = fake.first_name()
+        surname = fake.last_name()
+        father = fake.first_name_male()  # Simulate Greek-style father names
+        age = random.randint(1, 100)  # Age between 1 and 100
+        address = fake.address().replace("\n", ", ")  # SQLite prefers single-line addresses
+        amka = "".join([str(random.randint(0, 9)) for _ in range(11)])  # 11-digit random number
+        allergies = fake.sentence(nb_words=5) if random.random() > 0.5 else ""  # 50% chance of allergies
+        medications = fake.sentence(nb_words=5) if random.random() > 0.5 else ""  # 50% chance of meds
+
+        curr.execute("INSERT INTO patients (name, surname, father, age, address, amka, allergies, medications) "
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                     (name, surname, father, age, address, amka, allergies, medications))
+
+    conn.commit()
+    conn.close()
+    print(f"✅ Successfully inserted {num_entries} random patients!")
+
+class Patients(tk.Frame):
     def __init__(self, parent, controller):
         ttk.Frame.__init__(self, parent)
         self.controller = controller
-        label = ttk.Label(self, text="New Visit")
-        label.pack(side="top", fill="x", pady=10)
+        label = ttk.Label(self, text="Patients", font=('Helvetica', 18))
+        label.pack(pady=10)
 
+        # Scrollable Canvas Frame
+        canvas = tk.Canvas(self)
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
+        self.scrollable_frame = ttk.Frame(canvas)
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        # Create a window inside the canvas
+        canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Pack canvas and scrollbar
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # Fetch patient data and populate labels
+        data = self.fetch_patient_data()
+        # self.populate_labels(self.scrollable_frame, data)
+        self.populate_treeview(canvas)
+
+        # Force UI update to fix scrolling
+        self.update_idletasks()
+
+        # Navigation button
         button1 = ttk.Button(self, text="Go to Patient Profile",
-                            command=lambda: controller.show_frame("PatientProfile"))
-        button1.pack()
+                             command=lambda: controller.show_frame("PatientProfile"))
+        button1.pack(pady=10)
 
+    # def populate_labels(self, frame, data):
+    #     """Populates the scrollable frame with labels."""
+  
+    #     # Create a simple header row
+    #     ttk.Label(frame, text="Name").grid(row=0, column=0, sticky="w", padx=10)
+    #     ttk.Label(frame, text="Surname").grid(row=0, column=1, sticky="w", padx=10)
+    #     ttk.Label(frame, text="Age").grid(row=0, column=2, sticky="w", padx=10)
+
+    #     # Insert labels dynamically
+    #     for i, (name, surname, age) in enumerate(data, start=1):
+    #         ttk.Label(frame, text=name).grid(row=i, column=0, sticky="w", padx=10)
+    #         ttk.Label(frame, text=surname).grid(row=i, column=1, sticky="w", padx=10)
+    #         ttk.Label(frame, text=str(age)).grid(row=i, column=2, sticky="w", padx=10)
+
+    def populate_treeview(self, frame):
+        """Uses a Treeview instead of labels for better performance."""
+        columns = ("name", "surname", "age")
+        
+        tree = ttk.Treeview(frame, columns=columns, show="headings", height=20)
+        
+        tree.heading("name", text="Name")
+        tree.heading("surname", text="Surname")
+        tree.heading("age", text="Age")
+
+        tree.column("name", width=150, anchor="w")
+        tree.column("surname", width=150, anchor="w")
+        tree.column("age", width=50, anchor="center")
+
+        # Insert data into treeview
+        data = self.fetch_patient_data()
+        for row in data:
+            tree.insert("", "end", values=row)
+
+        tree.pack(fill="both", expand=True)
+
+    def fetch_patient_data(self):
+        """Fetches data from SQLite and returns it as a list of tuples."""
+        conn = sqlite3.connect('test.db')
+        curr = conn.cursor()
+        curr.execute("SELECT name, surname, age FROM patients")
+        rows = curr.fetchall()
+        conn.close()
+        return rows
+
+
+def populate_database(num_entries=1000):
+    """Populates the database with random patients if it's empty."""
+    fake = Faker()
+    conn = sqlite3.connect("test.db")
+    curr = conn.cursor()
+
+    # 🛠️ **Ensure the table exists BEFORE querying**
+    curr.execute("""CREATE TABLE IF NOT EXISTS patients (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    surname TEXT,
+                    father TEXT,
+                    age INTEGER,
+                    address TEXT,
+                    amka TEXT,
+                    allergies TEXT,
+                    medications TEXT
+                );""")
+    conn.commit()  # ✅ Commit the table creation to avoid errors
+
+    # ✅ Now check if the table has records
+    curr.execute("SELECT COUNT(*) FROM patients")
+    count = curr.fetchone()[0]
+
+    if count >= num_entries:
+        print(f"✅ Database already contains {count} patients. Skipping population.")
+        conn.close()
+        return
+
+    print(f"⚡ Populating database with {num_entries} random patients...")
+    for _ in range(num_entries):
+        name = fake.first_name()
+        surname = fake.last_name()
+        father = fake.first_name_male()
+        age = random.randint(1, 100)
+        address = fake.address().replace("\n", ", ")
+        amka = "".join([str(random.randint(0, 9)) for _ in range(11)])
+        allergies = fake.sentence(nb_words=5) if random.random() > 0.5 else ""
+        medications = fake.sentence(nb_words=5) if random.random() > 0.5 else ""
+
+        curr.execute("INSERT INTO patients (name, surname, father, age, address, amka, allergies, medications) "
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                     (name, surname, father, age, address, amka, allergies, medications))
+
+    conn.commit()
+    conn.close()
+    print(f"✅ Successfully inserted {num_entries} random patients!")
 
 
 if __name__ == "__main__":
+    
+    populate_database(100)
+
     app = App()
-    # button = ttk.Style()
-    # button.configure('.', font=('Helvetica', 12))
     label = ttk.Style()
     label.configure('.', font=('Helvetica', 12))
     app.mainloop()
