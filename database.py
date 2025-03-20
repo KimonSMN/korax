@@ -74,7 +74,7 @@ class PatientProfile(tk.Frame):
 
         # Container frame for label & entry (to be centered)
         form_frame = ttk.Frame(self)
-        form_frame.place(relx=0.5, y=380, anchor="center")  # Center the frame
+        form_frame.place(relx=0.5, rely=0.5, anchor="center")  # Center the frame
 
         self.entries = {}   # Dictionary to store entry widgets
 
@@ -85,7 +85,8 @@ class PatientProfile(tk.Frame):
         self.create_labeled_entry(form_frame, "Age", 3, 30)
         self.create_labeled_entry(form_frame, "Address", 4, 30)
         self.create_labeled_entry(form_frame, "AMKA", 5, 30)
-        allergies = self.create_textbox(form_frame, 200, 30, 6, "Enter Allergies...")
+        self.allergies = self.create_textbox(form_frame, 200, 30, 6, "Enter Allergies...")
+
 
         button = ttk.Button(form_frame, padding=(10, 9, 10, 7), text="Add new entry", style="Accent.TButton", command=self.add_entry) #padding aligns text in the center of button
         button.grid(column=0, columnspan=2, pady=10)
@@ -93,8 +94,9 @@ class PatientProfile(tk.Frame):
         buttonPrint = ttk.Button(form_frame, text="Print DB", command=self.print_database)
         buttonPrint.grid(column=0, columnspan=2, pady=10)
 
-        self.allergies_visible = True  # Track visibility
-        ttk.Button(form_frame, text="Toggle Allergies", command=lambda: self.toggle_text(allergies, 6)).grid(column=0, columnspan=2, pady=10)
+        self.allergies_visible = False  # Track visibility
+        ttk.Button(form_frame, text="Toggle Allergies", command=lambda: self.toggle_text(self.allergies, 6)).grid(column=0, columnspan=2, pady=10)
+        self.allergies.grid_remove() # Placed after the creation of the button because it didn't dynamically if placed before
 
         button1 = ttk.Button(form_frame, text="Go to New Visit",
                             command=lambda: controller.show_frame("NewVisit"))
@@ -228,8 +230,9 @@ class PatientProfile(tk.Frame):
             print("\nNo records found in the database.")
 
     def toggle_text(self, widget, row):
+        """Show/hide the allergies textbox """
         if self.allergies_visible:
-            widget.grid_forget()
+            widget.grid_remove()
         else:
             widget.grid(row=row, column=0, columnspan=2, pady=5, sticky="nsew")
 
