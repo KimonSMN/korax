@@ -1,10 +1,8 @@
 import tkinter as tk                # python 3
 from tkinter import ttk
 from tkinter import *
-from PIL import Image, ImageTk
 import sqlite3
-
-
+from datetime import date
 
 class App(tk.Tk):
 
@@ -39,12 +37,26 @@ class App(tk.Tk):
             frame.grid(row=0, column=0, sticky="nsew")
         self.show_frame("PatientProfile")
 
+        conn = sqlite3.connect('test.db')
+        curr = conn.cursor()
+ 
+        # Creating table
+        patients = """ CREATE TABLE IF NOT EXISTS patients (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name CHAR(25) NOT NULL,
+                    surname CHAR(25),
+                    father INTEGER,
+                    age INTEGER,
+                    address VARCHAR(255),
+                    amka INTEGER
+                ); """
+        
+        curr.execute(patients)
 
     def show_frame(self, page_name):
         '''Show a frame for the given page name'''
         frame = self.frames[page_name]
         frame.tkraise()
-
 
 
 class PatientProfile(tk.Frame):
@@ -81,8 +93,6 @@ class PatientProfile(tk.Frame):
                             command=lambda: controller.show_frame("NewVisit"))
         button1.grid(column=0, columnspan=2, pady=10)
 
-
-
     def create_labeled_entry(self, parent, label_text, row):
         """Creates a label and an entry field in the specified parent frame."""
         label = ttk.Label(parent, text=label_text)
@@ -99,7 +109,7 @@ class PatientProfile(tk.Frame):
         entry.bind("<FocusOut>", lambda event, e=entry, v=placeholder, default=label_text: self.restore_placeholder(e, v, default))
         
         # Store the entry in a dictionary for later access
-        self.entries[label_text] = (entry)
+        self.entries[label_text] = (entry, placeholder)
 
     def clearBox(self, entry, placeholder, default_text):
         """Clears the text inside the entry field only if it's the default placeholder."""
@@ -111,28 +121,47 @@ class PatientProfile(tk.Frame):
         if not placeholder.get().strip():
             placeholder.set(default_text)  # Restore placeholder text
 
-    def add_entry(self):
-        name = self.entries["Name"].get()  # Get text from the textbox
-        surname = self.entries["Surname"].get()
-        father = self.entries["Father Name"].get()
-        age = self.entries["Age"].get()
-        address = self.entries["Address"].get()
-        amka = self.entries["AMKA"].get()
+    def add_entry(self) -> None:
+        name: str = self.entries["Name"][1].get()  # Get text from the textbox
+        surname: str = self.entries["Surname"][1].get()
+        father: str = self.entries["Father Name"][1].get()
+        age_input: str = self.entries["Age"][1].get()
+        address: str = self.entries["Address"][1].get()
+        amka: str = self.entries["AMKA"][1].get()
 
-        if name and surname and father and age.isdigit():
-            conn = sqlite3.connect('test.db')
-            curr = conn.cursor()
+        # Validate non-empty fields
+        if not name or not surname or not father or not address:
+            print("ERROR: Name, Surname, Father Name and Address can't be empty!")
+            return
 
-            curr.execute("INSERT INTO patients (name,surname,father,age,address,amka)"
-                        "VALUES (?, ?, ?, ?, ?, ?)", (name,surname,father,age,address,amka))
-            conn.commit()
-            conn.close()
+        # Validate Age
+        try:
+            age: int = int(age_input)
+            if(age) <= 0 or age > 120: # Age sanity check
+                print("Error: Invalid age entered.")
+                return
+        except ValueError:
+            print("Error: Age must be a valid integer.")
+            return
 
-            #clear field after insert
-            for field in self.entries.values():
-                field.delete(0, tk.END)
-        else:
-            print("Please fill out all fields correctly")
+        # Validate AMKA 
+        if not amka.isdigit() or len(amka) != 11:
+            print("Error: AMKA must be an 11-digit number.")
+            return
+
+        conn = sqlite3.connect('test.db')
+        curr = conn.cursor()
+
+        curr.execute("INSERT INTO patients (name,surname,father,age,address,amka)"
+                    "VALUES (?, ?, ?, ?, ?, ?)", (name,surname,father,age,address,amka))
+        conn.commit()
+        conn.close()
+
+        #clear field after insert
+        for label_text, (entry, placeholder) in self.entries.items():
+            entry.delete(0, tk.END)
+            self.restore_placeholder(entry, placeholder, label_text)
+        
 
     def print_database(self):
         conn = sqlite3.connect('test.db')
