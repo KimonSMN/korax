@@ -2,6 +2,7 @@ import tkinter as tk                # python 3
 from tkinter import ttk
 from tkinter import *
 import sqlite3
+import customtkinter
 from datetime import date
 
 class App(tk.Tk):
@@ -48,7 +49,9 @@ class App(tk.Tk):
                     father INTEGER,
                     age INTEGER,
                     address VARCHAR(255),
-                    amka INTEGER
+                    amka INTEGER,
+                    allergies TEXT(1000),
+                    medications TEXT(1000)
                 ); """
         
         curr.execute(patients)
@@ -71,7 +74,7 @@ class PatientProfile(tk.Frame):
 
         # Container frame for label & entry (to be centered)
         form_frame = ttk.Frame(self)
-        form_frame.place(relx=0.5, y=280, anchor="center")  # Center the frame
+        form_frame.place(relx=0.5, y=380, anchor="center")  # Center the frame
 
         self.entries = {}   # Dictionary to store entry widgets
 
@@ -82,6 +85,7 @@ class PatientProfile(tk.Frame):
         self.create_labeled_entry(form_frame, "Age", 3)
         self.create_labeled_entry(form_frame, "Address", 4)
         self.create_labeled_entry(form_frame, "AMKA", 5)
+        self.create_textbox(form_frame, 200, 30, 6, "Enter Allergies...")
 
         button = ttk.Button(form_frame, padding=(10, 9, 10, 7), text="Add new entry", style="Accent.TButton", command=self.add_entry) #padding aligns text in the center of button
         button.grid(column=0, columnspan=2, pady=10)#, sticky='nswe'
@@ -96,7 +100,7 @@ class PatientProfile(tk.Frame):
     def create_labeled_entry(self, parent, label_text, row):
         """Creates a label and an entry field in the specified parent frame."""
         label = ttk.Label(parent, text=label_text)
-        label.config(font=('Helvetica', 12)) # font size 12
+        label.configure(font=('Helvetica', 12)) # font size 12
         label.grid(row=row, column=0, padx=10, pady=5, sticky="e")
 
         placeholder = tk.StringVar()
@@ -105,21 +109,51 @@ class PatientProfile(tk.Frame):
         entry = ttk.Entry(parent, textvariable=placeholder)
         entry.grid(row=row, column=1, padx=10, pady=5, sticky="w")
 
-        entry.bind("<FocusIn>", lambda event, e=entry, v=placeholder, default=label_text: self.clearBox(e, v, default))
-        entry.bind("<FocusOut>", lambda event, e=entry, v=placeholder, default=label_text: self.restore_placeholder(e, v, default))
+        entry.bind("<FocusIn>", lambda event, w=entry, d=label_text: self.clear_placeholder(w, d))
+        entry.bind("<FocusOut>", lambda event, w=entry, d=label_text: self.restore_placeholder(w, d))
+
+        entry.configure(foreground="gray", font=('Helvatica', 10))  # Placeholder text color
         
         # Store the entry in a dictionary for later access
         self.entries[label_text] = (entry, placeholder)
 
-    def clearBox(self, entry, placeholder, default_text):
-        """Clears the text inside the entry field only if it's the default placeholder."""
-        if placeholder.get() == default_text:
-            placeholder.set("")  # Clear placeholder text
+    def create_textbox(self, parent: Frame, height: int, width: int, row: int, label_text: str) -> None:
+        text = customtkinter.CTkTextbox(parent, height = height, width = width, 
+                                        fg_color="white", border_width=1 ,border_color="lightgray", text_color="gray", font=('Helvetica', 12))
+        text.insert("1.0", label_text)
+        text.grid(row=row, column=0, columnspan=2, padx=10, pady=5, sticky="nsew")
 
-    def restore_placeholder(self, entry, placeholder, default_text):
-        """Restores placeholder text if the field is left empty."""
-        if not placeholder.get().strip():
-            placeholder.set(default_text)  # Restore placeholder text
+        placeholder = tk.StringVar()
+        placeholder.set(label_text)  # Default placeholder text
+
+        text.bind("<FocusIn>", lambda event, w=text, d=label_text: self.clear_placeholder(w, d))
+        text.bind("<FocusOut>", lambda event, w=text, d=label_text: self.restore_placeholder(w, d))
+    
+        text.configure()  # Placeholder text color
+
+
+    def clear_placeholder(self, widget, default_text: str) -> None:
+        """Clears the placeholder text in a ttk.Entry or customtkinter.CTkTextbox when clicked."""
+        if isinstance(widget, ttk.Entry):  # Handling ttk.Entry
+            if widget.get() == default_text:
+                widget.delete(0, tk.END)
+                widget.config(foreground="black")  # Normal text color
+        elif isinstance(widget, customtkinter.CTkTextbox):  # Handling customtkinter.CTkTextbox
+            if widget.get("1.0", "end-1c") == default_text:
+                widget.delete("1.0", "end")
+                widget.configure(text_color="black")  # Normal text color
+
+    def restore_placeholder(self, widget, default_text: str) -> None:
+        """Restores the placeholder text if the ttk.Entry or customtkinter.CTkTextbox is empty."""
+        if isinstance(widget, ttk.Entry):  # Handling ttk.Entry
+            if not widget.get().strip():
+                widget.insert(0, default_text)
+                widget.config(foreground="gray")  # Placeholder color
+        elif isinstance(widget, customtkinter.CTkTextbox):  # Handling customtkinter.CTkTextbox
+            if not widget.get("1.0", "end-1c").strip():
+                widget.insert("1.0", default_text)
+                widget.configure(text_color="gray")  # Placeholder color
+
 
     def add_entry(self) -> None:
         name: str = self.entries["Name"][1].get()  # Get text from the textbox
