@@ -79,16 +79,16 @@ class PatientProfile(tk.Frame):
         self.entries = {}   # Dictionary to store entry widgets
 
         # Create input fields
-        self.create_labeled_entry(form_frame, "Name", 0)
-        self.create_labeled_entry(form_frame, "Surname", 1)
-        self.create_labeled_entry(form_frame, "Father Name", 2)
-        self.create_labeled_entry(form_frame, "Age", 3)
-        self.create_labeled_entry(form_frame, "Address", 4)
-        self.create_labeled_entry(form_frame, "AMKA", 5)
+        self.create_labeled_entry(form_frame, "Name", 0, 30)
+        self.create_labeled_entry(form_frame, "Surname", 1, 30)
+        self.create_labeled_entry(form_frame, "Father Name", 2, 30)
+        self.create_labeled_entry(form_frame, "Age", 3, 30)
+        self.create_labeled_entry(form_frame, "Address", 4, 30)
+        self.create_labeled_entry(form_frame, "AMKA", 5, 30)
         self.create_textbox(form_frame, 200, 30, 6, "Enter Allergies...")
 
         button = ttk.Button(form_frame, padding=(10, 9, 10, 7), text="Add new entry", style="Accent.TButton", command=self.add_entry) #padding aligns text in the center of button
-        button.grid(column=0, columnspan=2, pady=10)#, sticky='nswe'
+        button.grid(column=0, columnspan=2, pady=10)
 
         buttonPrint = ttk.Button(form_frame, text="Print DB", command=self.print_database)
         buttonPrint.grid(column=0, columnspan=2, pady=10)
@@ -97,17 +97,17 @@ class PatientProfile(tk.Frame):
                             command=lambda: controller.show_frame("NewVisit"))
         button1.grid(column=0, columnspan=2, pady=10)
 
-    def create_labeled_entry(self, parent, label_text, row):
+    def create_labeled_entry(self, parent, label_text, row, width):
         """Creates a label and an entry field in the specified parent frame."""
-        label = ttk.Label(parent, text=label_text)
-        label.configure(font=('Helvetica', 12)) # font size 12
-        label.grid(row=row, column=0, padx=10, pady=5, sticky="e")
+        # label = ttk.Label(parent, text=label_text)
+        # label.configure(font=('Helvetica', 12)) # font size 12
+        # label.grid(row=row, column=0, padx=10, pady=5, sticky="e")
 
         placeholder = tk.StringVar()
         placeholder.set(label_text)  # Default placeholder text
 
-        entry = ttk.Entry(parent, textvariable=placeholder)
-        entry.grid(row=row, column=1, padx=10, pady=5, sticky="w")
+        entry = ttk.Entry(parent, textvariable=placeholder, width=width)
+        entry.grid(row=row, column=1, pady=5, sticky="nsew")
 
         entry.bind("<FocusIn>", lambda event, w=entry, d=label_text: self.clear_placeholder(w, d))
         entry.bind("<FocusOut>", lambda event, w=entry, d=label_text: self.restore_placeholder(w, d))
@@ -121,7 +121,7 @@ class PatientProfile(tk.Frame):
         text = customtkinter.CTkTextbox(parent, height = height, width = width, 
                                         fg_color="white", border_width=1 ,border_color="lightgray", text_color="gray", font=('Helvetica', 12))
         text.insert("1.0", label_text)
-        text.grid(row=row, column=0, columnspan=2, padx=10, pady=5, sticky="nsew")
+        text.grid(row=row, column=0, columnspan=2, pady=5, sticky="nsew")
 
         placeholder = tk.StringVar()
         placeholder.set(label_text)  # Default placeholder text
@@ -130,8 +130,6 @@ class PatientProfile(tk.Frame):
         text.bind("<FocusOut>", lambda event, w=text, d=label_text: self.restore_placeholder(w, d))
     
         self.entries[label_text] = (text, None)
-
-
 
     def clear_placeholder(self, widget, default_text: str) -> None:
         """Clears the placeholder text in a ttk.Entry or customtkinter.CTkTextbox when clicked."""
