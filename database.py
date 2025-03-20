@@ -85,13 +85,16 @@ class PatientProfile(tk.Frame):
         self.create_labeled_entry(form_frame, "Age", 3, 30)
         self.create_labeled_entry(form_frame, "Address", 4, 30)
         self.create_labeled_entry(form_frame, "AMKA", 5, 30)
-        self.create_textbox(form_frame, 200, 30, 6, "Enter Allergies...")
+        allergies = self.create_textbox(form_frame, 200, 30, 6, "Enter Allergies...")
 
         button = ttk.Button(form_frame, padding=(10, 9, 10, 7), text="Add new entry", style="Accent.TButton", command=self.add_entry) #padding aligns text in the center of button
         button.grid(column=0, columnspan=2, pady=10)
 
         buttonPrint = ttk.Button(form_frame, text="Print DB", command=self.print_database)
         buttonPrint.grid(column=0, columnspan=2, pady=10)
+
+        self.allergies_visible = True  # Track visibility
+        ttk.Button(form_frame, text="Toggle Allergies", command=lambda: self.toggle_text(allergies, 6)).grid(column=0, columnspan=2, pady=10)
 
         button1 = ttk.Button(form_frame, text="Go to New Visit",
                             command=lambda: controller.show_frame("NewVisit"))
@@ -116,8 +119,8 @@ class PatientProfile(tk.Frame):
         
         # Store the entry in a dictionary for later access
         self.entries[label_text] = (entry, placeholder)
-
-    def create_textbox(self, parent: Frame, height: int, width: int, row: int, label_text: str) -> None:
+        
+    def create_textbox(self, parent: Frame, height: int, width: int, row: int, label_text: str):
         text = customtkinter.CTkTextbox(parent, height = height, width = width, 
                                         fg_color="white", border_width=1 ,border_color="lightgray", text_color="gray", font=('Helvetica', 12))
         text.insert("1.0", label_text)
@@ -130,7 +133,8 @@ class PatientProfile(tk.Frame):
         text.bind("<FocusOut>", lambda event, w=text, d=label_text: self.restore_placeholder(w, d))
     
         self.entries[label_text] = (text, None)
-
+        return text
+    
     def clear_placeholder(self, widget, default_text: str) -> None:
         """Clears the placeholder text in a ttk.Entry or customtkinter.CTkTextbox when clicked."""
         if isinstance(widget, ttk.Entry):  # Handling ttk.Entry
@@ -172,7 +176,7 @@ class PatientProfile(tk.Frame):
         address: str = get_widget_value(self.entries["Address"][0])
         amka: str = get_widget_value(self.entries["AMKA"][0])
         allergies: str = get_widget_value(self.entries["Enter Allergies..."][0])
-        print(allergies)
+
         # Validate non-empty fields
         if not name or not surname or not father or not address:
             print("ERROR: Name, Surname, Father Name and Address can't be empty!")
@@ -223,6 +227,13 @@ class PatientProfile(tk.Frame):
         else:
             print("\nNo records found in the database.")
 
+    def toggle_text(self, widget, row):
+        if self.allergies_visible:
+            widget.grid_forget()
+        else:
+            widget.grid(row=row, column=0, columnspan=2, pady=5, sticky="nsew")
+
+        self.allergies_visible = not self.allergies_visible
 
 
 class NewVisit(tk.Frame):
