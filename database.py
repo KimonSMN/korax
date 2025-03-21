@@ -271,7 +271,7 @@ class Patients(tk.Frame):
         # Force UI update to fix scrolling
         self.update_idletasks()
 
-        self.tree.bind("<Double 1>", self.openProfile)
+        self.tree.bind("<Double 1>",self.openProfile)
 
         # Navigation button
         button1 = ttk.Button(self, text="Go to Patient Profile",
@@ -313,6 +313,7 @@ class Patients(tk.Frame):
         print("Selected Entry")
         curItem = self.tree.focus()
         print (self.tree.item(curItem, "values"))
+        self.controller.show_frame("PatientProfile")
 
 
 def populate_database(num_entries=1000):
