@@ -6,6 +6,7 @@ class Patients(tk.Frame):
     def __init__(self, parent, controller):
         ttk.Frame.__init__(self, parent)
         self.controller = controller
+
         label = ttk.Label(self, text="Patients", font=('Helvetica', 18))
         label.pack(pady=10)
 
@@ -36,20 +37,28 @@ class Patients(tk.Frame):
         self.tree.bind("<Double 1>",self.openProfile)
 
         # Navigation button
-        button1 = ttk.Button(self, text="Go to Patient Profile",
+        button1 = ttk.Button(self, text="Go to Add Entry",
                              command=lambda: controller.show_frame("PatientProfile"))
         button1.pack(pady=10)
         
+        button2 = ttk.Button(self, text="Go to Edit",
+                             command=lambda: controller.show_frame("EditPatient"))
+        button2.pack(pady=10)
+
+
+
     def populate_treeview(self, frame):
         """Uses a Treeview instead of labels for better performance."""
-        columns = ("name", "surname", "age")
+        columns = ("amka", "name", "surname", "age")
         
         tree = ttk.Treeview(frame, columns=columns, show="headings", height=20)
         
+        tree.heading("amka", text="AMKA")
         tree.heading("name", text="Name")
         tree.heading("surname", text="Surname")
         tree.heading("age", text="Age")
 
+        tree.column("amka", width=150, anchor="w")
         tree.column("name", width=150, anchor="w")
         tree.column("surname", width=150, anchor="w")
         tree.column("age", width=50, anchor="center")
@@ -66,13 +75,34 @@ class Patients(tk.Frame):
         """Fetches data from SQLite and returns it as a list of tuples."""
         conn = sqlite3.connect('database.db')
         curr = conn.cursor()
-        curr.execute("SELECT name, surname, age FROM patients")
+        curr.execute("SELECT amka, name, surname, age FROM patients")
         rows = curr.fetchall()
         conn.close()
         return rows
 
     def openProfile(self, event):
-        print("Selected Entry")
         curItem = self.tree.focus()
-        print (self.tree.item(curItem, "values"))
-        self.controller.show_frame("PatientProfile")
+        values = self.tree.item(curItem, "values")
+
+        amka = values[0]
+
+        conn = sqlite3.connect('database.db')
+        curr = conn.cursor()
+        curr.execute("SELECT * FROM patients WHERE amka = ?", (amka,))
+        row = curr.fetchone()
+        conn.close()
+
+        if values:
+            patient_data = {
+                "amka": row[0],
+                "name": row[1],
+                "surname": row[2],
+                "father": row[3],
+                "age": row[4],
+                "address": row[5],
+                "allergies": row[6],
+                "medications": row[7]
+            }
+        print(row)
+        self.controller.show_frame("EditPatient", patient_data)
+

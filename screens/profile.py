@@ -40,9 +40,13 @@ class PatientProfile(tk.Frame):
         ttk.Button(form_frame, text="Toggle Allergies", command=lambda: self.toggle_text(self.allergies, 6)).grid(column=0, columnspan=2, pady=10)
         self.allergies.grid_remove() # Placed after the creation of the button because it didn't dynamically if placed before
 
-        button1 = ttk.Button(form_frame, text="Go to Patients",
+        button1 = ttk.Button(form_frame, text="Go to Patient List",
                             command=lambda: controller.show_frame("Patients"))
         button1.grid(column=0, columnspan=2, pady=10)
+
+        button2 = ttk.Button(self, text="Go to Edit",
+                             command=lambda: controller.show_frame("EditPatient"))
+        button2.pack(pady=10)
 
     def create_labeled_entry(self, parent, label_text, row, width):
         """Creates a label and an entry field in the specified parent frame."""
@@ -113,12 +117,12 @@ class PatientProfile(tk.Frame):
             return ""
         
         # Extract input values
+        amka: str = get_widget_value(self.entries["AMKA"][0])
         name: str = get_widget_value(self.entries["Name"][0])  
         surname: str = get_widget_value(self.entries["Surname"][0])
         father: str = get_widget_value(self.entries["Father Name"][0])
         age_input: str = get_widget_value(self.entries["Age"][0])
         address: str = get_widget_value(self.entries["Address"][0])
-        amka: str = get_widget_value(self.entries["AMKA"][0])
         allergies: str = get_widget_value(self.entries["Enter Allergies..."][0])
 
         # Validate non-empty fields
@@ -145,8 +149,8 @@ class PatientProfile(tk.Frame):
         conn = sqlite3.connect('database.db')
         curr = conn.cursor()
 
-        curr.execute("INSERT INTO patients (name,surname,father,age,address,amka,allergies)"
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)", (name,surname,father,age,address,amka,allergies))
+        curr.execute("INSERT INTO patients (amka,name,surname,father,age,address,allergies)"
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)", (amka,name,surname,father,age,address,allergies))
         conn.commit()
         conn.close()
 

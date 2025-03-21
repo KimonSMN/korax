@@ -10,13 +10,12 @@ def populate_database(num_entries=1000):
 
     # 🛠️ **Ensure the table exists BEFORE querying**
     curr.execute("""CREATE TABLE IF NOT EXISTS patients (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    amka INTEGER PRIMARY KEY,
                     name TEXT NOT NULL,
                     surname TEXT,
                     father TEXT,
                     age INTEGER,
                     address TEXT,
-                    amka TEXT,
                     allergies TEXT,
                     medications TEXT
                 );""")
@@ -42,9 +41,9 @@ def populate_database(num_entries=1000):
         allergies = fake.sentence(nb_words=5) if random.random() > 0.5 else ""
         medications = fake.sentence(nb_words=5) if random.random() > 0.5 else ""
 
-        curr.execute("INSERT INTO patients (name, surname, father, age, address, amka, allergies, medications) "
+        curr.execute("INSERT INTO patients (amka, name, surname, father, age, address, allergies, medications) "
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                     (name, surname, father, age, address, amka, allergies, medications))
+                     (amka, name, surname, father, age, address, allergies, medications))
 
     conn.commit()
     conn.close()
