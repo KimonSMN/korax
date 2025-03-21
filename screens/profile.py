@@ -142,7 +142,7 @@ class PatientProfile(tk.Frame):
             print("Error: AMKA must be an 11-digit number.")
             return
 
-        conn = sqlite3.connect('test.db')
+        conn = sqlite3.connect('database.db')
         curr = conn.cursor()
 
         curr.execute("INSERT INTO patients (name,surname,father,age,address,amka,allergies)"
@@ -159,7 +159,7 @@ class PatientProfile(tk.Frame):
             self.restore_placeholder(widget, label_text)
 
     def print_database(self):
-        conn = sqlite3.connect('test.db')
+        conn = sqlite3.connect('database.db')
         curr = conn.cursor()
         curr.execute("SELECT * FROM patients")
         rows = curr.fetchall()

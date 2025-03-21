@@ -64,7 +64,7 @@ class Patients(tk.Frame):
 
     def fetch_patient_data(self):
         """Fetches data from SQLite and returns it as a list of tuples."""
-        conn = sqlite3.connect('test.db')
+        conn = sqlite3.connect('database.db')
         curr = conn.cursor()
         curr.execute("SELECT name, surname, age FROM patients")
         rows = curr.fetchall()

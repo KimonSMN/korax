@@ -29,7 +29,7 @@ class App(tk.Tk):
 
         self.show_frame("Patients")
 
-        conn = sqlite3.connect('test.db')
+        conn = sqlite3.connect('database.db')
         curr = conn.cursor()
         curr.execute("""
             CREATE TABLE IF NOT EXISTS patients (

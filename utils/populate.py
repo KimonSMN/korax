@@ -5,7 +5,7 @@ import random
 def populate_database(num_entries=1000):
     """Populates the database with random patients if it's empty."""
     fake = Faker()
-    conn = sqlite3.connect("test.db")
+    conn = sqlite3.connect("database.db")
     curr = conn.cursor()
 
     # 🛠️ **Ensure the table exists BEFORE querying**
