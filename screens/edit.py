@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import sqlite3
+import customtkinter
 
 class EditPatient(tk.Frame):
     def __init__(self, parent, controller):
@@ -12,14 +13,7 @@ class EditPatient(tk.Frame):
         # Force UI update to fix scrolling
         self.update_idletasks()
 
-        # Navigation button
-        button1 = ttk.Button(self, text="Go to Patient List",
-                             command=lambda: controller.show_frame("Patients"))
-        button1.pack(pady=10)
-
-        button2 = ttk.Button(self, text="Go to Add entry",
-                             command=lambda: controller.show_frame("PatientProfile"))
-        button2.pack(pady=10)
+        self.old_amka = None
 
         form_frame = ttk.Frame(self)
         form_frame.place(relx=0.5, rely=0.5, anchor="center")  # Center the frame
@@ -35,8 +29,24 @@ class EditPatient(tk.Frame):
         self.amka_entry = self.create_labeled_entry(form_frame, "AMKA", 5, 30)
         # self.allergies = self.create_textbox(form_frame, 200, 30, 6, "Enter Allergies...")
 
+        editButton = ttk.Button(form_frame, padding=(10, 9, 10, 7), style="Accent.TButton", text="Update Patient Info",
+                             command=self.update_entry)
+        editButton.grid(column=0, columnspan=2, pady=10)
+
+        # Navigation button
+        button1 = ttk.Button(form_frame, text="Go to Patient List",
+                             command=lambda: controller.show_frame("Patients"))
+        button1.grid(column=0, columnspan=2, pady=10)
+
+        button2 = ttk.Button(form_frame, text="Go to Add entry",
+                             command=lambda: controller.show_frame("PatientProfile"))
+        button2.grid(column=0, columnspan=2, pady=10)
+
+
     def set_data(self, data):
         """ Update the form with patient data. """
+
+        self.old_amka = data.get("amka")
 
         if "name" in data:
             self.name_entry.delete(0, tk.END)
@@ -67,6 +77,38 @@ class EditPatient(tk.Frame):
             self.address_entry.delete(0, tk.END)
             self.address_entry.insert(0, data["address"])
             self.address_entry.configure(foreground="black")
+
+    def update_entry(self) -> None:
+        def get_widget_value(widget):
+            if isinstance(widget, ttk.Entry):
+                return widget.get().strip()
+            elif isinstance(widget, customtkinter.CTkTextbox):
+                return widget.get("1.0", "end-1c").strip()
+            return ""
+
+        amka = get_widget_value(self.entries["AMKA"][0])
+        name = get_widget_value(self.entries["Name"][0])
+        surname = get_widget_value(self.entries["Surname"][0])
+        father = get_widget_value(self.entries["Father Name"][0])
+        age = get_widget_value(self.entries["Age"][0])
+        address = get_widget_value(self.entries["Address"][0])
+        allergies = ""  # Add actual allergies if needed later
+
+        if not self.old_amka:
+            print("Error: old_amka is not set. Cannot update.")
+            return
+
+        conn = sqlite3.connect("database.db")
+        curr = conn.cursor()
+        curr.execute("""
+            UPDATE patients 
+            SET name = ?, surname = ?, father = ?, age = ?, amka = ?, address = ?, allergies = ? 
+            WHERE amka = ?
+        """, (name, surname, father, age, amka, address, allergies, self.old_amka))
+        conn.commit()
+        conn.close()
+
+        print(f"✅ Patient with AMKA {self.old_amka} updated.")
 
 
     def reset_form(self):

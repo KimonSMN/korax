@@ -44,10 +44,6 @@ class PatientProfile(tk.Frame):
                             command=lambda: controller.show_frame("Patients"))
         button1.grid(column=0, columnspan=2, pady=10)
 
-        button2 = ttk.Button(self, text="Go to Edit",
-                             command=lambda: controller.show_frame("EditPatient"))
-        button2.pack(pady=10)
-
     def create_labeled_entry(self, parent, label_text, row, width):
         """Creates a label and an entry field in the specified parent frame."""
         # label = ttk.Label(parent, text=label_text)

@@ -4,46 +4,57 @@ import sqlite3
 
 class Patients(tk.Frame):
     def __init__(self, parent, controller):
-        ttk.Frame.__init__(self, parent)
+        super().__init__(parent)
         self.controller = controller
 
+        # Title Label
         label = ttk.Label(self, text="Patients", font=('Helvetica', 18))
         label.pack(pady=10)
 
-        # Scrollable Canvas Frame
-        canvas = tk.Canvas(self)
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
-        self.scrollable_frame = ttk.Frame(canvas)
+        # Treeview Frame
+        treeFrame = ttk.Frame(self)
+        treeFrame.pack(fill="y", padx=5, pady=5, side="left")
 
-        self.scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
+        # Scrollbar
+        treeScroll = ttk.Scrollbar(treeFrame)
+        treeScroll.pack(side="right", fill="y")
 
-        # Create a window inside the canvas
-        canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
+        # Treeview
+        self.tree = ttk.Treeview(treeFrame,
+                                 selectmode="extended",
+                                 yscrollcommand=treeScroll.set,
+                                 columns=("AMKA", "Name", "Surname", "Age"),
+                                 show="headings",
+                                 height=12)
+        self.tree.pack(expand=True, fill="both")
 
-        # Pack canvas and scrollbar
-        canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+        treeScroll.config(command=self.tree.yview)
 
-        # self.populate_labels(self.scrollable_frame, data)
-        self.tree = self.populate_treeview(canvas)
+        # Setup Treeview headings
+        self.tree.heading("AMKA", text=" AMKA", anchor="w")
+        self.tree.heading("Name", text=" Name", anchor="w")
+        self.tree.heading("Surname", text="Surname", anchor="w")
+        self.tree.heading("Age", text="Age", anchor="center")
 
-        # Force UI update to fix scrolling
-        self.update_idletasks()
+        self.tree.column("AMKA", anchor="w", width=120)
+        self.tree.column("Name", anchor="w", width=120)
+        self.tree.column("Surname", anchor="w", width=120)
+        self.tree.column("Age", anchor="center", width=30)
 
-        self.tree.bind("<Double 1>",self.openProfile)
+        # Example data
+        for i in range(40):
+            self.tree.insert("", "end", values=(f"Patient {i}", 20 + i % 50, f"AMKA{i:05}"))
 
-        # Navigation button
+        self.tree.bind("<Double-1>", self.openProfile)
+
+        # Navigation Buttons
         button1 = ttk.Button(self, text="Go to Add Entry",
                              command=lambda: controller.show_frame("PatientProfile"))
-        button1.pack(pady=10)
-        
+        button1.pack(pady=5)
+
         button2 = ttk.Button(self, text="Go to Edit",
                              command=lambda: controller.show_frame("EditPatient"))
-        button2.pack(pady=10)
+        button2.pack(pady=5)
 
 
 
@@ -53,15 +64,15 @@ class Patients(tk.Frame):
         
         tree = ttk.Treeview(frame, columns=columns, show="headings", height=20)
         
-        tree.heading("amka", text="AMKA")
-        tree.heading("name", text="Name")
-        tree.heading("surname", text="Surname")
-        tree.heading("age", text="Age")
+        tree.heading("amka", text=" AMKA", anchor="w")
+        tree.heading("name", text=" Name", anchor="w")
+        tree.heading("surname", text="Surname", anchor="w")
+        tree.heading("age", text="Age", anchor="center")
 
-        tree.column("amka", width=150, anchor="w")
+        tree.column("amka", width=120, anchor="w")
         tree.column("name", width=150, anchor="w")
-        tree.column("surname", width=150, anchor="w")
-        tree.column("age", width=50, anchor="center")
+        tree.column("surname", width=200, anchor="w")
+        tree.column("age", width=30, anchor="center")
 
         # Insert data into treeview
         data = self.fetch_patient_data()
@@ -106,3 +117,15 @@ class Patients(tk.Frame):
         print(row)
         self.controller.show_frame("EditPatient", patient_data)
 
+
+    def refresh(self):
+        # Clear existing entries in the treeview
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        # Fetch updated data
+        data = self.fetch_patient_data()
+
+        # Re-insert data into the treeview
+        for row in data:
+            self.tree.insert("", "end", values=row)
