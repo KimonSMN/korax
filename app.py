@@ -4,12 +4,15 @@ import sqlite3
 
 from screens.profile import PatientProfile
 from screens.patients import Patients
+from screens.edit import EditPatient
 
 class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.geometry("800x800")
         self.option_add("*tearOff", False)
+
+        self.selected_patient = None  # Store selected patient data
 
         style = ttk.Style(self)
         self.tk.call("source", "forest-light.tcl")
@@ -21,7 +24,7 @@ class App(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
-        for F in (PatientProfile, Patients):
+        for F in (PatientProfile, Patients, EditPatient):
             page_name = F.__name__
             frame = F(parent=container, controller=self)
             self.frames[page_name] = frame
@@ -33,13 +36,12 @@ class App(tk.Tk):
         curr = conn.cursor()
         curr.execute("""
             CREATE TABLE IF NOT EXISTS patients (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                amka INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
                 surname TEXT,
                 father TEXT,
                 age INTEGER,
                 address TEXT,
-                amka TEXT,
                 allergies TEXT,
                 medications TEXT
             );
@@ -47,6 +49,12 @@ class App(tk.Tk):
         conn.commit()
         conn.close()
 
-    def show_frame(self, page_name):
+    def show_frame(self, page_name, data=None):
         frame = self.frames[page_name]
+        
+        if data:
+            self.selected_patient = data
+            if hasattr(frame, "set_data"):
+                frame.set_data(data)
+
         frame.tkraise()
