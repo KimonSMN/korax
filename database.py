@@ -240,44 +240,6 @@ class PatientProfile(tk.Frame):
 
         self.allergies_visible = not self.allergies_visible
 
-
-def populate_database(num_entries=1000):
-    fake = Faker()
-    conn = sqlite3.connect("test.db")
-    curr = conn.cursor()
-
-    # Ensure table exists
-    curr.execute("""CREATE TABLE IF NOT EXISTS patients (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    surname TEXT,
-                    father TEXT,
-                    age INTEGER,
-                    address TEXT,
-                    amka TEXT,
-                    allergies TEXT,
-                    medications TEXT
-                );""")
-
-    # Insert fake data
-    for _ in range(num_entries):
-        name = fake.first_name()
-        surname = fake.last_name()
-        father = fake.first_name_male()  # Simulate Greek-style father names
-        age = random.randint(1, 100)  # Age between 1 and 100
-        address = fake.address().replace("\n", ", ")  # SQLite prefers single-line addresses
-        amka = "".join([str(random.randint(0, 9)) for _ in range(11)])  # 11-digit random number
-        allergies = fake.sentence(nb_words=5) if random.random() > 0.5 else ""  # 50% chance of allergies
-        medications = fake.sentence(nb_words=5) if random.random() > 0.5 else ""  # 50% chance of meds
-
-        curr.execute("INSERT INTO patients (name, surname, father, age, address, amka, allergies, medications) "
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                     (name, surname, father, age, address, amka, allergies, medications))
-
-    conn.commit()
-    conn.close()
-    print(f"✅ Successfully inserted {num_entries} random patients!")
-
 class Patients(tk.Frame):
     def __init__(self, parent, controller):
         ttk.Frame.__init__(self, parent)
@@ -303,33 +265,19 @@ class Patients(tk.Frame):
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        # Fetch patient data and populate labels
-        data = self.fetch_patient_data()
         # self.populate_labels(self.scrollable_frame, data)
-        self.populate_treeview(canvas)
+        self.tree = self.populate_treeview(canvas)
 
         # Force UI update to fix scrolling
         self.update_idletasks()
+
+        self.tree.bind("<Double 1>", self.openProfile)
 
         # Navigation button
         button1 = ttk.Button(self, text="Go to Patient Profile",
                              command=lambda: controller.show_frame("PatientProfile"))
         button1.pack(pady=10)
-
-    # def populate_labels(self, frame, data):
-    #     """Populates the scrollable frame with labels."""
-  
-    #     # Create a simple header row
-    #     ttk.Label(frame, text="Name").grid(row=0, column=0, sticky="w", padx=10)
-    #     ttk.Label(frame, text="Surname").grid(row=0, column=1, sticky="w", padx=10)
-    #     ttk.Label(frame, text="Age").grid(row=0, column=2, sticky="w", padx=10)
-
-    #     # Insert labels dynamically
-    #     for i, (name, surname, age) in enumerate(data, start=1):
-    #         ttk.Label(frame, text=name).grid(row=i, column=0, sticky="w", padx=10)
-    #         ttk.Label(frame, text=surname).grid(row=i, column=1, sticky="w", padx=10)
-    #         ttk.Label(frame, text=str(age)).grid(row=i, column=2, sticky="w", padx=10)
-
+        
     def populate_treeview(self, frame):
         """Uses a Treeview instead of labels for better performance."""
         columns = ("name", "surname", "age")
@@ -350,6 +298,7 @@ class Patients(tk.Frame):
             tree.insert("", "end", values=row)
 
         tree.pack(fill="both", expand=True)
+        return tree
 
     def fetch_patient_data(self):
         """Fetches data from SQLite and returns it as a list of tuples."""
@@ -359,6 +308,11 @@ class Patients(tk.Frame):
         rows = curr.fetchall()
         conn.close()
         return rows
+
+    def openProfile(self, event):
+        print("Selected Entry")
+        curItem = self.tree.focus()
+        print (self.tree.item(curItem, "values"))
 
 
 def populate_database(num_entries=1000):
