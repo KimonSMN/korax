@@ -57,4 +57,7 @@ class App(tk.Tk):
             if hasattr(frame, "set_data"):
                 frame.set_data(data)
 
+        if hasattr(frame, "refresh"):
+            frame.refresh()
+            
         frame.tkraise()
