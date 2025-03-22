@@ -9,7 +9,7 @@ from screens.edit import EditPatient
 class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.geometry("800x800")
+        self.geometry("600x800")
         self.option_add("*tearOff", False)
 
         self.selected_patient = None  # Store selected patient data
@@ -30,7 +30,7 @@ class App(tk.Tk):
             self.frames[page_name] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
-        self.show_frame("Patients")
+        self.show_frame("PatientProfile")
 
         conn = sqlite3.connect('database.db')
         curr = conn.cursor()
