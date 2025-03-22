@@ -7,15 +7,31 @@ class Patients(tk.Frame):
         super().__init__(parent)
         self.controller = controller
 
+        self.grid_rowconfigure(1, weight=1)  # Let row with treeview expand vertically
+        self.grid_columnconfigure(0, weight=1)  # Left spacer
+        self.grid_columnconfigure(2, weight=1)  # Right spacer
+
+        # --- Title Frame with Left/Right Buttons ---
+        title_frame = ttk.Frame(self)
+        title_frame.grid(row=0, column=1, pady=10)
+
+        left_btn = ttk.Button(title_frame, text="Add New Patient", style="Accent.TButton", padding=(10, 9, 10, 7),
+                             command=lambda: controller.show_frame("PatientProfile"))
+        left_btn.pack(side="right")
+
         # Title Label
-        label = ttk.Label(self, text="Patients", font=('Helvetica', 18))
-        label.pack(pady=10)
+        title_label = ttk.Label(title_frame, text="Patients", font=('Helvetica', 18), padding=(0, 10, 220, 0))
+        title_label.pack(side="left")
 
-        # Treeview Frame
+        # right_btn = ttk.Button(title_frame, text="Go to Edit", padding=(10, 9, 10, 7),
+        #                      command=lambda: controller.show_frame("EditPatient"))
+        # right_btn.pack(side="right")
+
+        # --- Treeview Frame
         treeFrame = ttk.Frame(self)
-        treeFrame.pack(fill="y", padx=5, pady=5, side="left")
+        treeFrame.grid(row=1, column=1, sticky="ns", padx=10, pady=10)
 
-        # Scrollbar
+        # Treeview Scrollbar
         treeScroll = ttk.Scrollbar(treeFrame)
         treeScroll.pack(side="right", fill="y")
 
@@ -26,7 +42,7 @@ class Patients(tk.Frame):
                                  columns=("AMKA", "Name", "Surname", "Age"),
                                  show="headings",
                                  height=12)
-        self.tree.pack(expand=True, fill="both")
+        self.tree.pack(expand=True, fill="y")
 
         treeScroll.config(command=self.tree.yview)
 
@@ -48,13 +64,6 @@ class Patients(tk.Frame):
         self.tree.bind("<Double-1>", self.openProfile)
 
         # Navigation Buttons
-        button1 = ttk.Button(self, text="Go to Add Entry",
-                             command=lambda: controller.show_frame("PatientProfile"))
-        button1.pack(pady=5)
-
-        button2 = ttk.Button(self, text="Go to Edit",
-                             command=lambda: controller.show_frame("EditPatient"))
-        button2.pack(pady=5)
 
 
     def populate_treeview(self, frame):

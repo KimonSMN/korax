@@ -18,17 +18,21 @@ class PatientProfile(tk.Frame):
         form_frame = ttk.Frame(self)
         form_frame.place(relx=0.5, rely=0.5, anchor="center")  # Center the frame
 
+        form_frame.columnconfigure(0, weight=1)
+        form_frame.columnconfigure(1, weight=1)
+
         self.entries = {}   # Dictionary to store entry widgets
 
         # Create input fields
-        self.create_labeled_entry(form_frame, "Name", 0, 30)
-        self.create_labeled_entry(form_frame, "Surname", 1, 30)
-        self.create_labeled_entry(form_frame, "Father Name", 2, 30)
-        self.create_labeled_entry(form_frame, "Age", 3, 30)
-        self.create_labeled_entry(form_frame, "Address", 4, 30)
-        self.create_labeled_entry(form_frame, "AMKA", 5, 30)
-        self.allergies = self.create_textbox(form_frame, 200, 30, 6, "Enter Allergies...")
+        self.create_labeled_entry(form_frame, "AMKA", "Enter AMKA number", 0, 30)
+        self.create_labeled_entry(form_frame, "Name", "Enter patient name", 2, 30, inline=True, col=0)
+        self.create_labeled_entry(form_frame, "Surname", "Enter patient surname", 2, 30, inline=True, col=1)
+        self.create_labeled_entry(form_frame, "Father's Name", "Enter father's name", 4, 30)
+        self.create_labeled_entry(form_frame, "Age", " ", 6, 30)
+        self.create_labeled_entry(form_frame, "Address", "Enter patient's address", 8, 30)
 
+
+        self.allergies = self.create_textbox(form_frame, 200, 30, 6, "Enter Allergies...")
 
         button = ttk.Button(form_frame, padding=(10, 9, 10, 7), text="Add new entry", style="Accent.TButton", command=self.add_entry) #padding aligns text in the center of button
         button.grid(column=0, columnspan=2, pady=10)
@@ -44,25 +48,37 @@ class PatientProfile(tk.Frame):
                             command=lambda: controller.show_frame("Patients"))
         button1.grid(column=0, columnspan=2, pady=10)
 
-    def create_labeled_entry(self, parent, label_text, row, width):
-        """Creates a label and an entry field in the specified parent frame."""
-        # label = ttk.Label(parent, text=label_text)
-        # label.configure(font=('Helvetica', 12)) # font size 12
-        # label.grid(row=row, column=0, padx=10, pady=5, sticky="e")
+    def create_labeled_entry(self, parent, label_text, placeholder_text, row, width, inline=False, col=0):
+        """Creates a label and entry field. Inline fields go side by side. Non-inline fields span both columns."""
+        
+        # Label
+        label = ttk.Label(parent, text=label_text, padding=(0, 12, 0, 0))
+        label.configure(font=('Helvetica', 11))
+        if inline:
+            label.grid(row=row, column=col, sticky="w", padx=((15,0) if label_text == "Surname" else (0,0)))
+        else:
+            label.grid(row=row, column=0, columnspan=2, sticky="w")
 
+        # Placeholder
         placeholder = tk.StringVar()
-        placeholder.set(label_text)  # Default placeholder text
+        placeholder.set(placeholder_text)
 
         entry = ttk.Entry(parent, textvariable=placeholder, width=width)
-        entry.grid(row=row, column=1, pady=5, sticky="nsew")
+        if inline:
+            entry.grid(row=row+1, column=col, pady=5, padx=((15,0) if col == 1 else 0), sticky="ew")
+        else:
+            entry.grid(row=row+1, column=0, columnspan=2, pady=5, sticky="ew")
 
-        entry.bind("<FocusIn>", lambda event, w=entry, d=label_text: self.clear_placeholder(w, d))
-        entry.bind("<FocusOut>", lambda event, w=entry, d=label_text: self.restore_placeholder(w, d))
+        entry.bind("<FocusIn>", lambda event, w=entry, d=placeholder_text: self.clear_placeholder(w, d))
+        entry.bind("<FocusOut>", lambda event, w=entry, d=placeholder_text: self.restore_placeholder(w, d))
 
-        entry.configure(foreground="gray", font=('Helvatica', 10))  # Placeholder text color
-        
-        # Store the entry in a dictionary for later access
+        entry.configure(foreground="gray", font=('Helvetica', 10))
+
         self.entries[label_text] = (entry, placeholder)
+
+
+
+
         
     def create_textbox(self, parent: Frame, height: int, width: int, row: int, label_text: str):
         text = customtkinter.CTkTextbox(parent, height = height, width = width, 
