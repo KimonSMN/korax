@@ -27,7 +27,8 @@ class EditPatient(tk.Frame):
         self.age_entry = self.create_labeled_entry(form_frame, "Age", 3, 30)
         self.address_entry = self.create_labeled_entry(form_frame, "Address", 4, 30)
         self.amka_entry = self.create_labeled_entry(form_frame, "AMKA", 5, 30)
-        # self.allergies = self.create_textbox(form_frame, 200, 30, 6, "Enter Allergies...")
+        self.allergies_entry = self.create_textbox(form_frame, 200, 30, 6, "Enter Allergies...")
+        # self.medication_entry = self.create_textbox(form_frame, 200, 30, 7, "Enter Medication...")
 
         editButton = ttk.Button(form_frame, padding=(10, 9, 10, 7), style="Accent.TButton", text="Update Patient Info",
                              command=self.update_entry)
@@ -78,6 +79,12 @@ class EditPatient(tk.Frame):
             self.address_entry.insert(0, data["address"])
             self.address_entry.configure(foreground="black")
 
+        if "allergies" in data:
+            print(data["allergies"])
+            self.allergies_entry.delete('1.0', tk.END)
+            self.allergies_entry.insert('1.0', data["allergies"])
+            self.allergies_entry.configure(text_color="black")
+
     def update_entry(self) -> None:
         def get_widget_value(widget):
             if isinstance(widget, ttk.Entry):
@@ -92,7 +99,7 @@ class EditPatient(tk.Frame):
         father = get_widget_value(self.entries["Father Name"][0])
         age = get_widget_value(self.entries["Age"][0])
         address = get_widget_value(self.entries["Address"][0])
-        allergies = ""  # Add actual allergies if needed later
+        allergies = get_widget_value(self.entries["Enter Allergies..."][0])
 
         if not self.old_amka:
             print("Error: old_amka is not set. Cannot update.")
@@ -136,16 +143,32 @@ class EditPatient(tk.Frame):
         self.entries[label_text] = (entry, placeholder)
         return entry
 
+
+    def create_textbox(self, parent: tk.Frame, height: int, width: int, row: int, label_text: str):
+        text = customtkinter.CTkTextbox(parent, height = height, width = width, 
+                                        fg_color="white", border_width=1 ,border_color="lightgray", text_color="gray", font=('Helvetica', 12))
+        text.insert("1.0", label_text)
+        text.grid(row=row, column=1, columnspan=2, pady=5, sticky="nsew")
+
+        placeholder = tk.StringVar()
+        placeholder.set(label_text)  # Default placeholder text
+
+        text.bind("<FocusIn>", lambda event, w=text, d=label_text: self.clear_placeholder(w, d))
+        text.bind("<FocusOut>", lambda event, w=text, d=label_text: self.restore_placeholder(w, d))
+    
+        self.entries[label_text] = (text, None)
+        return text
+
     def clear_placeholder(self, widget, default_text: str) -> None:
         """Clears the placeholder text in a ttk.Entry or customtkinter.CTkTextbox when clicked."""
         if isinstance(widget, ttk.Entry):  # Handling ttk.Entry
             if widget.get() == default_text:
                 widget.delete(0, tk.END)
                 widget.config(foreground="black")  # Normal text color
-        # elif isinstance(widget, customtkinter.CTkTextbox):  # Handling customtkinter.CTkTextbox
-        #     if widget.get("1.0", "end-1c") == default_text:
-        #         widget.delete("1.0", "end")
-        #         widget.configure(text_color="black")  # Normal text color
+        elif isinstance(widget, customtkinter.CTkTextbox):  # Handling customtkinter.CTkTextbox
+            if widget.get("1.0", "end-1c") == default_text:
+                widget.delete("1.0", "end")
+                widget.configure(text_color="black")  # Normal text color
 
     def restore_placeholder(self, widget, default_text: str) -> None:
         """Restores the placeholder text if the ttk.Entry or customtkinter.CTkTextbox is empty."""
@@ -153,7 +176,7 @@ class EditPatient(tk.Frame):
             if not widget.get().strip():
                 widget.insert(0, default_text)
                 widget.config(foreground="gray")  # Placeholder color
-        # elif isinstance(widget, customtkinter.CTkTextbox):  # Handling customtkinter.CTkTextbox
-        #     if not widget.get("1.0", "end-1c").strip():
-        #         widget.insert("1.0", default_text)
-        #         widget.configure(text_color="gray")  # Placeholder color
+        elif isinstance(widget, customtkinter.CTkTextbox):  # Handling customtkinter.CTkTextbox
+            if not widget.get("1.0", "end-1c").strip():
+                widget.insert("1.0", default_text)
+                widget.configure(text_color="gray")  # Placeholder color

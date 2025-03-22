@@ -57,7 +57,6 @@ class Patients(tk.Frame):
         button2.pack(pady=5)
 
 
-
     def populate_treeview(self, frame):
         """Uses a Treeview instead of labels for better performance."""
         columns = ("amka", "name", "surname", "age")
