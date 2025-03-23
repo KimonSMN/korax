@@ -3,12 +3,13 @@ from tkinter import ttk
 import customtkinter
 import sqlite3
 from tkinter import Frame
+from tkcalendar import Calendar, DateEntry
+import datetime
 
 class PatientProfile(tk.Frame):
     def __init__(self, parent, controller):
         ttk.Frame.__init__(self, parent)
         self.controller = controller
-
         # Title label (kept at the top)
         label = ttk.Label(self, text="Patient Profile")
         label.config(font=('Helvetica', 18)) # font size 18
@@ -28,25 +29,49 @@ class PatientProfile(tk.Frame):
         self.create_labeled_entry(form_frame, "Name", "Enter patient name", 2, 30, inline=True, col=0)
         self.create_labeled_entry(form_frame, "Surname", "Enter patient surname", 2, 30, inline=True, col=1)
         self.create_labeled_entry(form_frame, "Father's Name", "Enter father's name", 4, 30)
-        self.create_labeled_entry(form_frame, "Age", " ", 6, 30)
-        self.create_labeled_entry(form_frame, "Address", "Enter patient's address", 8, 30)
+        self.create_labeled_entry(form_frame, "Date of Birth", " ", 6, 30, inline=True, col=0)
+        self.my_date = DateEntry(form_frame,width=25,maxdate=datetime.date.today(), date_pattern='dd-mm-yyyy')
+        self.my_date.grid(row=7)
+        self.my_date.bind("<<DateEntrySelected>>", self.update_age) # On Calendar Selection
+        self.my_date.bind("<Return>", self.update_age) # On Enter press
+        self.my_date.bind("<FocusOut>", self.update_age) # On Focus out
 
+        age = self.find_age()
+
+        self.age = self.create_labeled_entry(form_frame, "Age", age, 6, 30, inline=True, col=1)
+        self.create_labeled_entry(form_frame, "Address", "Enter patient's address", 8, 30)
 
         self.allergies = self.create_textbox(form_frame, 200, 30, 6, "Enter Allergies...")
 
-        button = ttk.Button(form_frame, padding=(10, 9, 10, 7), text="Add new entry", style="Accent.TButton", command=self.add_entry) #padding aligns text in the center of button
-        button.grid(column=0, columnspan=2, pady=10)
+        button = ttk.Button(form_frame, text="Save", style="Accent.TButton", command=self.add_entry) #padding aligns text in the center of button
+        button.grid(column=1,row=10, columnspan=2, pady=10, sticky="e")
 
-        buttonPrint = ttk.Button(form_frame, text="Print DB", command=self.print_database)
-        buttonPrint.grid(column=0, columnspan=2, pady=10)
+        button1 = ttk.Button(form_frame, text="Cancel",
+                            command=lambda: controller.show_frame("Patients"))
+        button1.grid(column=0,row=10, columnspan=2, pady=10, sticky="w")
 
         self.allergies_visible = False  # Track visibility
-        ttk.Button(form_frame, text="Toggle Allergies", command=lambda: self.toggle_text(self.allergies, 6)).grid(column=0, columnspan=2, pady=10)
+        # ttk.Button(form_frame, text="Toggle Allergies", command=lambda: self.toggle_text(self.allergies, 6)).grid(column=0, columnspan=2, pady=10)
         self.allergies.grid_remove() # Placed after the creation of the button because it didn't dynamically if placed before
 
-        button1 = ttk.Button(form_frame, text="Go to Patient List",
-                            command=lambda: controller.show_frame("Patients"))
-        button1.grid(column=0, columnspan=2, pady=10)
+    def find_age(self) -> int:
+
+        today = datetime.date.today()
+        try:
+            birth_date = self.my_date.get_date()
+            age: int = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+            return age
+
+        except Exception as e:
+            print("Error getting date:", e)
+            return 0
+        
+    def update_age(self, event=None):
+        age = self.find_age()
+        self.age.configure(state='normal')
+        self.age.delete(0, 'end')
+        self.age.insert(0, str(age))
+        self.age.configure(state='disabled')
 
     def create_labeled_entry(self, parent, label_text, placeholder_text, row, width, inline=False, col=0):
         """Creates a label and entry field. Inline fields go side by side. Non-inline fields span both columns."""
@@ -55,7 +80,7 @@ class PatientProfile(tk.Frame):
         label = ttk.Label(parent, text=label_text, padding=(0, 12, 0, 0))
         label.configure(font=('Helvetica', 11))
         if inline:
-            label.grid(row=row, column=col, sticky="w", padx=((15,0) if label_text == "Surname" else (0,0)))
+            label.grid(row=row, column=col, sticky="w", padx=((15,0) if label_text == "Surname" or label_text == "Age" else (0,0)))
         else:
             label.grid(row=row, column=0, columnspan=2, sticky="w")
 
@@ -75,9 +100,7 @@ class PatientProfile(tk.Frame):
         entry.configure(foreground="gray", font=('Helvetica', 10))
 
         self.entries[label_text] = (entry, placeholder)
-
-
-
+        return entry
 
         
     def create_textbox(self, parent: Frame, height: int, width: int, row: int, label_text: str):
@@ -132,7 +155,7 @@ class PatientProfile(tk.Frame):
         amka: str = get_widget_value(self.entries["AMKA"][0])
         name: str = get_widget_value(self.entries["Name"][0])  
         surname: str = get_widget_value(self.entries["Surname"][0])
-        father: str = get_widget_value(self.entries["Father Name"][0])
+        father: str = get_widget_value(self.entries["Father's Name"][0])
         age_input: str = get_widget_value(self.entries["Age"][0])
         address: str = get_widget_value(self.entries["Address"][0])
         allergies: str = get_widget_value(self.entries["Enter Allergies..."][0])
