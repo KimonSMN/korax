@@ -19,7 +19,7 @@ class EditPatient(tk.Frame):
         form_frame.place(relx=0.5, rely=0.5, anchor="center")  # Center the frame
 
         self.entries = {}   # Dictionary to store entry widgets
-
+#test
         # Create input fields
         self.name_entry = self.create_labeled_entry(form_frame, "Name", 0, 30)
         self.surname_entry = self.create_labeled_entry(form_frame, "Surname", 1, 30)
