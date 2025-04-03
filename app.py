@@ -30,7 +30,7 @@ class App(tk.Tk):
             self.frames[page_name] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
-        self.show_frame("PatientProfile")
+        self.show_frame("Patients")
 
         conn = sqlite3.connect('database.db')
         curr = conn.cursor()
