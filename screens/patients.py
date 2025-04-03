@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import sqlite3
+from screens.profile import PatientProfile
 
 class Patients(tk.Frame):
     def __init__(self, parent, controller):
@@ -15,17 +16,25 @@ class Patients(tk.Frame):
         title_frame = ttk.Frame(self)
         title_frame.grid(row=0, column=1, pady=10)
 
-        left_btn = ttk.Button(title_frame, text="Add New Patient", style="Accent.TButton", padding=(10, 9, 10, 7),
+        left_btn = ttk.Button(title_frame, text="Go to Add Entry", style="Accent.TButton", padding=(10, 9, 10, 7),
                              command=lambda: controller.show_frame("PatientProfile"))
         left_btn.pack(side="right")
 
         # Title Label
-        title_label = ttk.Label(title_frame, text="Patients", font=('Helvetica', 18), padding=(0, 10, 220, 0))
-        title_label.pack(side="left")
+        # title_label = ttk.Label(title_frame, text="Patients", font=('Helvetica', 18), padding=(0, 10, 220, 0))
+        # title_label.pack(side="left")
 
-        # right_btn = ttk.Button(title_frame, text="Go to Edit", padding=(10, 9, 10, 7),
-        #                      command=lambda: controller.show_frame("EditPatient"))
-        # right_btn.pack(side="right")
+        placeholder_text = "Search for Patient"
+
+        self.search_entry = ttk.Entry(title_frame, width=30)
+        self.search_entry.insert(0, placeholder_text)  # <-- Insert placeholder directly into widget
+        self.search_entry.configure(foreground="gray", font=('Helvetica', 12))
+
+        self.search_entry.pack(side="left", padx=(0, 74))
+
+        self.search_entry.bind("<FocusIn>", lambda event: PatientProfile.clear_placeholder(self.search_entry, placeholder_text))
+        self.search_entry.bind("<FocusOut>", lambda event: PatientProfile.restore_placeholder(self.search_entry, placeholder_text))
+        self.search_entry.bind("<KeyRelease>", lambda event: self.search_patient())
 
         # --- Treeview Frame
         treeFrame = ttk.Frame(self)
@@ -99,6 +108,20 @@ class Patients(tk.Frame):
         conn.close()
         return rows
 
+    def search_patient(self):
+        query = self.search_entry.get().strip().lower()
+        for item in self.tree.get_children():
+                self.tree.delete(item)       
+                
+        all_data = self.fetch_patient_data()
+        if query == "search for patient":
+            query = ""
+
+        for row in all_data:
+            if any(query in str(cell).lower() for cell in row):
+                self.tree.insert("", "end", values=row)
+
+
     def openProfile(self, event):
         curItem = self.tree.focus()
         values = self.tree.item(curItem, "values")
@@ -125,6 +148,14 @@ class Patients(tk.Frame):
         print(row)
         self.controller.show_frame("EditPatient", patient_data)
 
+    def on_show(self):
+        placeholder_text = "Search for Patient"
+        
+        self.search_entry.delete(0, tk.END)
+        self.search_entry.insert(0, placeholder_text)
+        self.search_entry.configure(foreground="gray")
+
+        self.refresh()
 
     def refresh(self):
         # Clear existing entries in the treeview

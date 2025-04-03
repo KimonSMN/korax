@@ -118,7 +118,8 @@ class PatientProfile(tk.Frame):
         self.entries[label_text] = (text, None)
         return text
     
-    def clear_placeholder(self, widget, default_text: str) -> None:
+    @staticmethod
+    def clear_placeholder(widget, default_text: str) -> None:
         """Clears the placeholder text in a ttk.Entry or customtkinter.CTkTextbox when clicked."""
         if isinstance(widget, ttk.Entry):  # Handling ttk.Entry
             if widget.get() == default_text:
@@ -128,8 +129,9 @@ class PatientProfile(tk.Frame):
             if widget.get("1.0", "end-1c") == default_text:
                 widget.delete("1.0", "end")
                 widget.configure(text_color="black")  # Normal text color
-
-    def restore_placeholder(self, widget, default_text: str) -> None:
+    
+    @staticmethod
+    def restore_placeholder(widget, default_text: str) -> None:
         """Restores the placeholder text if the ttk.Entry or customtkinter.CTkTextbox is empty."""
         if isinstance(widget, ttk.Entry):  # Handling ttk.Entry
             if not widget.get().strip():

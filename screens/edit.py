@@ -39,10 +39,6 @@ class EditPatient(tk.Frame):
                              command=lambda: controller.show_frame("Patients"))
         button1.grid(column=0, columnspan=2, pady=10)
 
-        button2 = ttk.Button(form_frame, text="Go to Add entry",
-                             command=lambda: controller.show_frame("PatientProfile"))
-        button2.grid(column=0, columnspan=2, pady=10)
-
 
     def set_data(self, data):
         """ Update the form with patient data. """
