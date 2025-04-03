@@ -48,7 +48,7 @@ class App(tk.Tk):
         """)
         conn.commit()
         conn.close()
-
+        
     def show_frame(self, page_name, data=None):
         frame = self.frames[page_name]
         
@@ -59,5 +59,8 @@ class App(tk.Tk):
 
         if hasattr(frame, "refresh"):
             frame.refresh()
-            
+        
+        if hasattr(frame, "on_show"):
+            frame.on_show()
+        
         frame.tkraise()
